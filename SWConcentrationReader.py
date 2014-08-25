@@ -37,7 +37,7 @@ class SWHumanConcentrationReader(object):
 		self.endyear = int( self.data[len(self.data) - 1][0] ) / s.HOURS_IN_YEAR + self.startyear
 		self.timestep = self.determine_timestep()
 		self.time_step_dict = self.create_time_step_dict()
-		self.columnDict = self.createColumnDict()
+		self.column_dict = self.create_column_dict()
 
 	def concentration_for_individual_at_sampling(self, birth_year, sampling_year):
 
@@ -79,7 +79,7 @@ class SWHumanConcentrationReader(object):
 		numberOfPoints = number_of_years_in_sim * s.HOURS_IN_YEAR / self.timestep
 
 		start_index = self.time_step_dict[hour]
-		column = self.columnDict[year]
+		column = self.column_dict[year]
 
 		concentration = [] #return param
 		#return list() of concentration values over time.
@@ -136,7 +136,7 @@ class SWHumanConcentrationReader(object):
 				data.append(row)
 		return data
 
-	def createColumnDict(self):
+	def create_column_dict(self):
 		#essentially a map that links the year a person was born in to the column they reside in within C.txt file.
 		ret_dict = {}
 		i = 0
@@ -183,7 +183,7 @@ class SWHumanConcentrationReader(object):
 		return timestep		
 
 	def check_year(self, year):
-		if year in self.columnDict:
+		if year in self.column_dict:
 			return
 		else:
 			raise KeyError, self.INVALID_YEAR_ENTERED
