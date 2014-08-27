@@ -21,7 +21,7 @@ class SWHumanConcentrationReader(object):
 	# PUBLIC API
 	# METHODS BELOW
 
-	def __init__(self, filename, startyear=s.DEFAULT_START_YEAR, age_at_model_start=s.DEFAULT_AGE_AT_MODEL_START): # initializer
+	def __init__(self, filename, startyear=s.DEFAULT_START_YEAR, age_at_model_start=s.DEFAULT_AGE_AT_MODEL_START): # initializer / constructor
 
 		#startyear and age_at_model_start are default params. Likely don't need to be changed.
 		#Age at model start must be a value between 0 and 9 (inclusive).
@@ -58,46 +58,42 @@ class SWHumanConcentrationReader(object):
 
 		return c[index]
 
-	def concentration_profile_for_individual_born_in_year(self, year):
+	def concentration_profile_for_individual_born_in_year(self, birth_year):
 		#check if the year has already been calculated. Probably saves no time at all.
-		if year in self.concentrations:
-			return self.concentrations[year]
+		if birth_year in self.concentrations:
+			return self.concentrations[birth_year]
 
 		#check that the year being asked for makes sense.
-		self.check_year(year)
-		hour = self.convert_year_to_hour(year)
+
+		self.check_year(birth_year)
+		hour = self.convert_year_to_hour(birth_year)
 
 		number_of_years_in_sim = s.HUMAN_MAX_AGE
-		if (self.endyear - year) < s.HUMAN_MAX_AGE:
-			number_of_years_in_sim = self.endyear - year # just check if it is a human who is near the end of simulation.
+		if (self.endyear - birth_year) < s.HUMAN_MAX_AGE:
+			number_of_years_in_sim = self.endyear - birth_year # just check if it is a human who is near the end of simulation.
 
 		# check if this individual is born before the simulation start year.
-		if year < self.startyear:
-			number_of_years_in_sim = s.HUMAN_MAX_AGE - (self.startyear - year)
+		if birth_year < self.startyear:
+			number_of_years_in_sim = s.HUMAN_MAX_AGE - (self.startyear - birth_year)
 			hour = 0
 
-		numberOfPoints = number_of_years_in_sim * s.HOURS_IN_YEAR / self.timestep
+		number_of_points = number_of_years_in_sim * s.HOURS_IN_YEAR / self.timestep
 
 		start_index = self.time_step_dict[hour]
-		column = self.column_dict[year]
+		end_index = start_index + number_of_points
+		column = self.column_dict[birth_year]
 
-		concentration = [] #return param
-		#return list() of concentration values over time.
-		for i in range(start_index, start_index + numberOfPoints, 1):
-			c = self.data[i][column]
-			c = float(c)
-			concentration.append(c)
+		concentration = [float(x[column]) for x in self.data[start_index:end_index]]
 
-		self.concentrations.update( {year : concentration} )
+		self.concentrations.update( {birth_year : concentration} )
+
 		return concentration
 
 	def extract_default_concentrations(self):
-		ret_list = []
-		for year in range(self.startyear - self.age_at_model_start, self.startyear - self.age_at_model_start + s.HUMAN_MAX_AGE, s.DEFAULT_AGE_SPREAD):
-			c = self.concentration_profile_for_individual_born_in_year(year)
-			ret_list.append(c)
-
-		return ret_list
+		start = self.startyear - self.age_at_model_start
+		end = self.startyear - self.age_at_model_start + s.HUMAN_MAX_AGE
+		increment = s.DEFAULT_AGE_SPREAD
+		return [self.concentration_profile_for_individual_born_in_year(year) for year in range(start, end, increment)]
 
 	def extract_CBAT_for_year(self, year):
 
