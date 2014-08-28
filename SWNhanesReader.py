@@ -22,9 +22,7 @@ type_dict = {
 
 class SWNhanesReader(object):
 
-	# Special Vars
-	age = 'RIDAGEYR'
-	gender_code = 'RIAGENDR'
+	READ_DIETARY_INFO = True # save a lot of time reading data if false
 
 	"""docstring for NhanesReader
 
@@ -39,20 +37,20 @@ class SWNhanesReader(object):
 	def __init__(self, nhanes_year='2003-2004'):
 		super(SWNhanesReader, self).__init__()
 		self.nhanes_year = nhanes_year
-		self.data = self.obtainData()
+		self.data = self.obtain_data()
 
-	def concentrationForSeqnForPcb(self, seqn, pcb):
-		#return self.data[seqn][self.getNhanesCodeForPcb(pcb)]
-		return self.data.get(seqn).get(self.getNhanesCodeForPcb(pcb))
+	def concentration_for_seqn_for_pcb(self, seqn, pcb):
+		#return self.data[seqn][self.get_nhanes_code_for_pcb(pcb)]
+		return self.data.get(seqn).get(self.get_nhanes_code_for_pcb(pcb))
 
-	def getListOfSeqnForPCB(self, pcb='PCB-153'): # Default is PCB-153
-		pcb_string = self.getNhanesCodeForPcb(pcb)
+	def get_list_of_seqn_for_pcb(self, pcb='PCB-153'): # Default is PCB-153
+		pcb_string = self.get_nhanes_code_for_pcb(pcb)
 		return [seqn for seqn in self.data if pcb_string in self.data[seqn]];
 
-	def getListOfSeqn(self):
+	def get_list_of_seqn(self):
 		return self.data.keys()
 
-	def getMedianConcentrationForPcbForGender(self, pcb, female):
+	def get_median_concentration_for_pcb_for_gender(self, pcb, female):
 		# get all median concentrations for a particular PCB
 		# for male or female
 		# for 11-20, 21-30, 31-40, and so on.
@@ -66,26 +64,26 @@ class SWNhanesReader(object):
 		for i in range (start_age, end_age, age_gap):
 			age_group_start = i
 			age_group_end = i + age_gap - 1
-			age, c = self.getMedianConcentrationForPcbForAgeGroupForGender(pcb, age_group_start, age_group_end, female)
+			age, c = self.get_median_concentration_for_pcb_for_age_group_for_gender(pcb, age_group_start, age_group_end, female)
 			ages.append(age)
 			concentrations.append(c)
 
 		return [ages, concentrations]
 
 
-	def getMedianConcentrationForAllAgesForPcbForGender(self, pcb, female):
+	def get_median_concentration_for_all_ages_for_pcb_for_gender(self, pcb, female):
 
 		# Return the median of the reported NHANES PCB concentrations for a specific gender and specific PCB.
 
-		pcb_string = self.getNhanesCodeForPcb(pcb)
-		seqn_list = self.getListOfSeqnForPCB(pcb)
+		pcb_string = self.get_nhanes_code_for_pcb(pcb)
+		seqn_list = self.get_list_of_seqn_for_pcb(pcb)
 
 		c_list = []
 
 		gender = 2 if female else 1
 
 		for seqn in seqn_list:
-			if self.data[seqn][self.gender_code] == gender:
+			if self.data[seqn][s.GENDER_CODE] == gender:
 				c_list.append(self.data[seqn][pcb_string])
 
 
@@ -93,54 +91,54 @@ class SWNhanesReader(object):
 
 		return median
 
-	def getMedianConcentrationForPcbForAgeGroupForGender(self, pcb, min_age, max_age, female):
+	def get_median_concentration_for_pcb_for_age_group_for_gender(self, pcb, min_age, max_age, female):
 		# get median concentration of a PCB
 		# for a certain age group
 		# and for male or female.
-		ages, concentrations = self.getConcentrationsForPcbForAgeGroupForGender(pcb, min_age, max_age, female)
+		ages, concentrations = self.get_concentrations_for_pcb_for_age_group_for_gender(pcb, min_age, max_age, female)
 		median_concentration = np.median(concentrations)
 		median_age = np.median(ages)
 		return [median_age, median_concentration]
 
-	def getConcentrationsForPcbForAgeGroupForGender(self, pcb, min_age, max_age, female):
+	def get_concentrations_for_pcb_for_age_group_for_gender(self, pcb, min_age, max_age, female):
 		# return all concentrations of a certain PCB
 		# for a certain age group
 		# and for male or female
-		pcb_string = self.getNhanesCodeForPcb(pcb)
-		seqn_list = self.getListOfSeqnForPCB(pcb)
-		gender = self.genderNumberIfFemale(female)
+		pcb_string = self.get_nhanes_code_for_pcb(pcb)
+		seqn_list = self.get_list_of_seqn_for_pcb(pcb)
+		gender = self.gender_number_if_female(female)
 
 		ages = []
 		concentrations = []
 
 		for seqn in seqn_list:
-			if self.data[seqn][self.gender_code] == gender:
-				if self.data[seqn][self.age] >= min_age and self.data[seqn][self.age] <= max_age:
-					ages.append(self.data[seqn][self.age])
+			if self.data[seqn][s.GENDER_CODE] == gender:
+				if self.data[seqn][s.AGE_CODE] >= min_age and self.data[seqn][s.AGE_CODE] <= max_age:
+					ages.append(self.data[seqn][s.AGE_CODE])
 					concentrations.append(self.data[seqn][pcb_string])
 
 		return [ages, concentrations]
 
-	def getAgeAndConcentrationForPcbForGender(self, pcb, female):
-		pcb_string = self.getNhanesCodeForPcb(pcb)
-		seqn_list = self.getListOfSeqnForPCB(pcb)
-		gender = self.genderNumberIfFemale(female)
+	def get_age_and_concentration_for_pcb_for_gender(self, pcb, female):
+		pcb_string = self.get_nhanes_code_for_pcb(pcb)
+		seqn_list = self.get_list_of_seqn_for_pcb(pcb)
+		gender = self.gender_number_if_female(female)
 
 		ages = []
 		concentrations = []
 		for seqn in seqn_list:
-			if self.data[seqn][self.gender_code] == gender:
-				ages.append(self.data[seqn][self.age])
+			if self.data[seqn][s.GENDER_CODE] == gender:
+				ages.append(self.data[seqn][s.AGE_CODE])
 				concentrations.append(self.data[seqn][pcb_string])
 
 		return [ages, concentrations]
 
 	# Private Methods below this line.
 
-	def genderNumberIfFemale(self, female):
+	def gender_number_if_female(self, female):
 		return 2 if female else 1
 
-	def getNhanesCodeForPcb(self, pcb):
+	def get_nhanes_code_for_pcb(self, pcb):
 		# This method is designed to take any kind of string input (or int maybe)
 		# and turn it into the code used in the NHANES data.
 		# i.e. Entering 'PCB-153' should give back 'LBX153LA', the lipid adjusted PCB concentration code.
@@ -153,7 +151,7 @@ class SWNhanesReader(object):
 	def cast(self, var):
 		return type_dict[var] if var in type_dict else str
 
-	def obtainData(self):
+	def obtain_data(self):
 		ret_dict = {}
 
 		seqn_column = 1
@@ -192,31 +190,31 @@ class SWNhanesReader(object):
 					except ValueError: continue
 					ret_dict[seqn].update({header : val})
 
-		print 'brool'
 		# special read in for diet info
-		f = os.path.join(s.NHANES_DATA_PATH, self.folders_dict[self.nhanes_year], 'DR1IFF_C.csv')
+		if self.READ_DIETARY_INFO:
+			f = os.path.join(s.NHANES_DATA_PATH, self.folders_dict[self.nhanes_year], 'DR1IFF_C.csv')
 
-		food_number_column = 2
-		raw = []
+			food_number_column = 2
+			raw = []
 
-		for seqn in ret_dict:
-			ret_dict[seqn].update({'food_index' : {} })
+			for seqn in ret_dict:
+				ret_dict[seqn].update({'food_index' : {} })
 
-		with open(f, 'rU') as csvfile:
-			temp = csv.reader(csvfile, delimiter = ',', quotechar = '"')
-			for row in temp:
-				raw.append(row)
-		for row in raw[start_row:]:
-			seqn = int(row[seqn_column])
-			food_index = int(row[food_number_column])
-			ret_dict[seqn]['food_index'].update({food_index : {}})
-			for i, header in enumerate(raw[header_row][3:]):
-				header = header.upper()
-				column = i + 3
-				#print 'brool'
-				try: val = self.cast(header)(row[column])
-				except ValueError: continue
-				ret_dict[seqn]['food_index'][food_index].update({header : val})
+			with open(f, 'rU') as csvfile:
+				temp = csv.reader(csvfile, delimiter = ',', quotechar = '"')
+				for row in temp:
+					raw.append(row)
+			for row in raw[start_row:]:
+				seqn = int(row[seqn_column])
+				food_index = int(row[food_number_column])
+				ret_dict[seqn]['food_index'].update({food_index : {}})
+				for i, header in enumerate(raw[header_row][3:]):
+					header = header.upper()
+					column = i + 3
+					#print 'brool'
+					try: val = self.cast(header)(row[column])
+					except ValueError: continue
+					ret_dict[seqn]['food_index'][food_index].update({header : val})
 
 		
 		return ret_dict
