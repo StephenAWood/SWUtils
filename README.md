@@ -6,8 +6,8 @@ By Stephen Wood. See the license file for details.
 
 # Requirements
 
-Python 2.7 or later
-Output files from ACC-Human
+- Python 2.7 or later
+- Output files from ACC-Human
 
 # Documentation
 
