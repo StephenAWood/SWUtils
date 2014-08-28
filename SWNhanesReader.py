@@ -159,10 +159,7 @@ class SWNhanesReader(object):
 		start_row = 1
 		header_row = 0
 
-		#filenames = [self.folders_dict[self.nhanes_year] + '/' + name for name in self.filenames_dict[self.nhanes_year]]
-
 		filenames = [os.path.join(s.NHANES_DATA_PATH, self.folders_dict[self.nhanes_year], name) for name in self.filenames_dict[self.nhanes_year]]
-
 
 		imported_data = []
 
@@ -221,17 +218,9 @@ class SWNhanesReader(object):
 
 	# Dictionaries containing the appropriate file names.
 	filenames_dict = {
-
 		'2003-2004' : ['DEMO_C.csv', 'RHQ_C.csv', 'L28NPB_C.csv', 'BMX_C.csv', 'L28DFP_C.csv', 'DR1TOT_C.csv'],
 		'2001-2002' : ['DEMO_B.csv', 'L28POC_B.csv', 'BMX_B.csv'],
 		'1999-2000' : ['DEMO.csv', 'LAB28POC.csv', 'BMX.csv']
-
-	}
-
-	demographics_filename_dict = {
-		'2003-2004' : 'DEMO_C.csv',
-		'2001-2002' : 'DEMO_B.csv',
-		'1999-2000' : 'DEMO.csv'
 	}
 
 	folders_dict = {
@@ -239,14 +228,3 @@ class SWNhanesReader(object):
 		'2001-2002' : 'NHANES data 2001-2002',
 		'1999-2000' : 'NHANES data 1999-2000'
 	}
-
-	reproductive_filenames_dict = {
-		'2003-2004' : 'RHQ_C.csv'
-	}
-
-	pcb_filename_dict = {
-		'2003-2004' : 'L28NPB_C.csv',
-		'2001-2002' : 'L28POC_B.csv',
-		'1999-2000' : 'LAB28POC.csv'
-	}
-
