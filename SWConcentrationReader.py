@@ -8,7 +8,7 @@ from operator import itemgetter
 import SWSettings as s
 
 class SWHumanConcentrationReader(object):
-	"""docstring for ConcentrationReader
+	"""docstring for ConcentrationReader 
 
 	A class designed to help extract information from
 	either a CMAN.txt or CWOMAN.txt that is generated
