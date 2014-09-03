@@ -1,11 +1,10 @@
 # Created by Stephen Wood
 # Copyright (c) 2014 Stephen Wood. See included LICENSE file.
-#
-
 
 import csv
 from operator import itemgetter
 import SWSettings as s
+
 
 class SWHumanConcentrationReader(object):
 	"""docstring for ConcentrationReader 
@@ -17,6 +16,7 @@ class SWHumanConcentrationReader(object):
 	"""
 	ACCEPTED_FILENAMES = ['CMAN', 'CWOMAN', 'seqn']
 	INVALID_YEAR_ENTERED = 'Invalid year entered'
+	TIME_STRING = 'TIME'
 
 	# PUBLIC API
 	# METHODS BELOW
@@ -25,57 +25,33 @@ class SWHumanConcentrationReader(object):
 
 		#startyear and age_at_model_start are default params. Likely don't need to be changed.
 		#Age at model start must be a value between 0 and 9 (inclusive).
-
 		super(SWHumanConcentrationReader, self).__init__()
 		self.filename = filename
 		# if not any(s.upper() in filename.upper() for s in self.ACCEPTED_FILENAMES):
 		# 	raise IOError, 'Error, invalid human concentration file entered.'
-		self.concentrations = {}
 		self.startyear = startyear
 		self.age_at_model_start = age_at_model_start
 		self.data = self.read_file(filename)
-		self.endyear = int( self.data[len(self.data) - 1][0] ) / s.HOURS_IN_YEAR + self.startyear
+		self.endyear = int(self.data[len(self.data) - 1][0]) / s.HOURS_IN_YEAR + self.startyear
 		self.timestep = self.determine_timestep()
 		self.time_step_dict = self.create_time_step_dict()
 		self.column_dict = self.create_column_dict()
 
 	def concentration_for_individual_at_sampling(self, birth_year, sampling_year):
-
 		# grab the concentration profile for this individual.
 		c = self.concentration_profile_for_individual_born_in_year(birth_year)
 
-		year_diff = sampling_year - birth_year # Check how old this individual is at sampling.
-		#Necessary to find which value to take from their concentration profile.
-
-		# If there is an individual who is greater than 80 years old at the time of sampling, 
-		# I want to just take the last concentration value from that person.
-
-		if year_diff > s.HUMAN_MAX_AGE: # dealing with a person older than 80.
-			year_diff = s.HUMAN_MAX_AGE - (self.startyear - birth_year)
-		elif birth_year < self.startyear: # if an individual is born before sim start but not older than 80.
-			year_diff = sampling_year - self.startyear
-		index = year_diff * s.HOURS_IN_YEAR / self.timestep - 1
+		index = self.get_index_for_person_at_sampling(birth_year, sampling_year, c)
 
 		return c[index]
 
 	def concentration_profile_for_individual_born_in_year(self, birth_year):
-		#check if the year has already been calculated. Probably saves no time at all.
-		if birth_year in self.concentrations:
-			return self.concentrations[birth_year]
 
 		#check that the year being asked for makes sense.
-
 		self.check_year(birth_year)
-		hour = self.convert_year_to_hour(birth_year)
 
-		number_of_years_in_sim = s.HUMAN_MAX_AGE
-		if (self.endyear - birth_year) < s.HUMAN_MAX_AGE:
-			number_of_years_in_sim = self.endyear - birth_year # just check if it is a human who is near the end of simulation.
-
-		# check if this individual is born before the simulation start year.
-		if birth_year < self.startyear:
-			number_of_years_in_sim = s.HUMAN_MAX_AGE - (self.startyear - birth_year)
-			hour = 0
+		number_of_years_in_sim = self.get_number_of_years_in_sim_for_person_born_in_year(birth_year)
+		hour = 0 if self.is_person_born_before_simulation_start(birth_year) else self.convert_year_to_hour(birth_year)
 
 		number_of_points = number_of_years_in_sim * s.HOURS_IN_YEAR / self.timestep
 
@@ -84,9 +60,6 @@ class SWHumanConcentrationReader(object):
 		column = self.column_dict[birth_year]
 
 		concentration = [float(x[column]) for x in self.data[start_index:end_index]]
-
-		self.concentrations.update( {birth_year : concentration} )
-
 		return concentration
 
 	def extract_default_concentrations(self):
@@ -98,7 +71,7 @@ class SWHumanConcentrationReader(object):
 	def extract_CBAT_for_year(self, year):
 
 		if year > self.endyear or year < self.startyear:
-			raise Exception, 'Invalid year entered for CBAT.'
+			raise SWInvalidYearException('Invalid year entered for CBAT.')
 
 		hour = self.convert_year_to_hour(year)
 		ages = self.get_ages_for_CBAT(year)
@@ -108,11 +81,50 @@ class SWHumanConcentrationReader(object):
 		#sort
 		ages, CBAT_values = [list(x) for x in zip(*sorted(zip(ages, CBAT_values), key = itemgetter(0)))]
 
-		return (ages, CBAT_values)
+		return ages, CBAT_values
 
 	# PRIVATE API
 	# Methods below should not be accessed outside of this class.
-	# 
+
+	def get_index_for_person_at_sampling(self, birth_year, sampling_year, concentration_profile):
+		age = sampling_year - birth_year
+
+		if age <= 0: raise SWInvalidYearException('Error, sampling year is before the person was born!')
+
+		if self.is_person_older_than_max_age(age) and self.is_person_born_before_simulation_start(birth_year):
+			return len(concentration_profile) - 1
+		elif self.is_person_older_than_max_age(age):
+			return len(concentration_profile) - 1
+		elif self.is_person_born_before_simulation_start(birth_year):
+			return (sampling_year - self.startyear) * s.HOURS_IN_YEAR / self.timestep - 1
+		else:
+			return (sampling_year - birth_year) * s.HOURS_IN_YEAR / self.timestep - 1
+
+	def is_person_older_than_max_age(self, age):
+		return age > s.HUMAN_MAX_AGE
+
+	def get_number_of_years_in_sim_for_person_born_in_year(self, birth_year):
+
+		# need to check multiple conditions -
+		# 1) person who is born before the simulation starts
+		# 2) person who max age(80) is not reached when the simulation ends
+		# 3) person who fulfills both 1 AND 2 - this case should be tested first
+		# last case is a person who lives the default 80 years in the simulation.
+
+		if self.is_person_born_before_simulation_start(birth_year) and self.is_person_alive_after_simulation_end(birth_year): # condition 3
+			return self.endyear - self.startyear
+		elif self.is_person_alive_after_simulation_end(birth_year): # condition 2
+			return self.endyear - birth_year
+		elif self.is_person_born_before_simulation_start(birth_year): # condition 1
+			return s.HUMAN_MAX_AGE - (self.startyear - birth_year)
+		else:
+			return s.HUMAN_MAX_AGE
+
+	def is_person_alive_after_simulation_end(self, birth_year):
+		return (birth_year + s.HUMAN_MAX_AGE) > self.endyear
+
+	def is_person_born_before_simulation_start(self, birth_year):
+		return self.startyear > birth_year
 
 	def get_ages_for_CBAT(self, year):
 		ret_list = []
@@ -124,7 +136,8 @@ class SWHumanConcentrationReader(object):
 			ret_list.append(age)
 		return ret_list
 
-	def read_file(self, filename):
+	@staticmethod
+	def read_file(filename):
 		data = []
 		with open(filename, 'rU') as csvfile:
 			t = csv.reader(csvfile, delimiter = ',', quotechar= '"')
@@ -136,11 +149,12 @@ class SWHumanConcentrationReader(object):
 		#essentially a map that links the year a person was born in to the column they reside in within C.txt file.
 		ret_dict = {}
 		i = 0
-		for year in range(self.startyear - self.age_at_model_start - s.HUMAN_MAX_AGE + s.DEFAULT_AGE_SPREAD, self.endyear, s.DEFAULT_AGE_SPREAD):
+		years = range(self.startyear - self.age_at_model_start - s.HUMAN_MAX_AGE + s.DEFAULT_AGE_SPREAD, self.endyear, s.DEFAULT_AGE_SPREAD)
+		for year in years:
 			column = s.NUMBER_OF_HUMANS - (i % s.NUMBER_OF_HUMANS)
 			#print 'year', year, 'is in column', column
 			i += 1
-			ret_dict.update( {year : column} )
+			ret_dict.update({year : column})
 		return ret_dict
 
 	def create_time_step_dict(self):
@@ -151,7 +165,7 @@ class SWHumanConcentrationReader(object):
 		start_index = 0
 
 		for row in self.data:
-			if row[0].upper() == 'Time'.upper():
+			if row[0].upper() == self.TIME_STRING.upper():
 				break
 			start_index += 1
 
@@ -164,12 +178,11 @@ class SWHumanConcentrationReader(object):
 		#print ret_dict
 		return ret_dict
 
-
 	def determine_timestep(self):
 		index = 0
 
 		for row in self.data:
-			if row[0].upper() == 'Time'.upper():
+			if row[0].upper() == self.TIME_STRING.upper():
 				#print 'found it'
 				break
 			index += 1
@@ -182,7 +195,13 @@ class SWHumanConcentrationReader(object):
 		if year in self.column_dict:
 			return
 		else:
-			raise KeyError, self.INVALID_YEAR_ENTERED
+			raise SWInvalidYearException(self.INVALID_YEAR_ENTERED)
 
 	def convert_year_to_hour(self, year):
 		return (year - self.startyear) * s.HOURS_IN_YEAR
+
+class SWInvalidYearException(Exception):
+	def __init__(self, message):
+		self.message = message
+	def __str__(self):
+		return repr(self.message)
