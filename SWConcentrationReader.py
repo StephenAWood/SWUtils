@@ -43,10 +43,14 @@ class SWHumanConcentrationReader(object):
 
 		# grab the concentration profile for this individual.
 		c = self.concentration_profile_for_individual_born_in_year(birth_year)
-
 		index = self.get_index_for_person_at_sampling(birth_year, sampling_year, c)
-
 		return c[index]
+
+		# The other way to grab the concentration at sampling:
+		# 1) Get column for that individual (based on birth year)
+		# 2) Get hour in simulation: (sampling_year - startyear) * 8760
+		# 3) Get row index for the hour in simulation (using the time step dict) and subtract 1
+		# 4) Access self.data directly using the row and column. Should give the same result.
 
 	def concentration_profile_for_individual_born_in_year(self, birth_year):
 
@@ -112,7 +116,7 @@ class SWHumanConcentrationReader(object):
 
 		# need to check multiple conditions -
 		# 1) person who is born before the simulation starts
-		# 2) person who max age(80) is not reached when the simulation ends
+		# 2) person whos max age(80) is not reached when the simulation ends
 		# 3) person who fulfills both 1 AND 2 - this case should be tested first
 		# last case is a person who lives the default 80 years in the simulation.
 
