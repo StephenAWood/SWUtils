@@ -55,7 +55,7 @@ try:
 except Exception as e:
 	if isinstance(e, SWConcentrationReader.SWInvalidYearException):
 		print 'Good. exception caught.'
-		print 'Exception message: %s' % (e)
+		print 'Exception message: %s (%s)' % (e, type(e))
 	else:
 		print 'Exception was not caught.'
 		error_counter += 1
