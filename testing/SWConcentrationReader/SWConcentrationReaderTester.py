@@ -41,6 +41,8 @@ except Exception as e:
 		print 'Exception was not caught.'
 		error_counter += 1
 
+print seqn_21005.determine_index_at_data_start()
+
 if error_counter:
 	print 'There was atleast 1 error detected.'
 else:

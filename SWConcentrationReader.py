@@ -164,29 +164,21 @@ class SWHumanConcentrationReader(object):
 
 	def create_time_step_dict(self):
 		# dict structure: {hour : index of that hour}
-		start_index = 0
-
-		for row in self.data:
-			if row[0].upper() == self.TIME_STRING.upper():
-				break
-			start_index += 1
-
-		start_index += 1
-
+		start_index = self.determine_index_at_data_start()
 		return {int(self.data[i][0]) : i for i in range(start_index, len(self.data))}
 
-	def determine_timestep(self):
-		index = 0
-
+	def determine_index_at_data_start(self):
+		start_index = 0
 		for row in self.data:
 			if row[0].upper() == self.TIME_STRING.upper():
-				#print 'found it'
+				start_index +=1
 				break
-			index += 1
+			start_index += 1
+		return start_index # this is usually 8. (i.e. 9th row)
 
-		timestep = int(self.data[index + 2][0]) - int(self.data[index + 1][0])
-
-		return timestep		
+	def determine_timestep(self):
+		i = self.determine_index_at_data_start()
+		return int(self.data[i + 1][0]) - int(self.data[i][0])
 
 	def check_year(self, year):
 		if year in self.column_dict:
