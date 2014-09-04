@@ -38,6 +38,9 @@ class SWHumanConcentrationReader(object):
 		self.column_dict = self.create_column_dict()
 
 	def concentration_for_individual_at_sampling(self, birth_year, sampling_year):
+		if not self.is_year_in_simulation(sampling_year):
+			raise SWInvalidYearException('Error, sampling year %d is not in the simulation' % (sampling_year))
+
 		# grab the concentration profile for this individual.
 		c = self.concentration_profile_for_individual_born_in_year(birth_year)
 
@@ -69,9 +72,8 @@ class SWHumanConcentrationReader(object):
 		return [self.concentration_profile_for_individual_born_in_year(year) for year in range(start, end, increment)]
 
 	def extract_CBAT_for_year(self, year):
-
-		if year > self.endyear or year < self.startyear:
-			raise SWInvalidYearException('Invalid year entered for CBAT.')
+		if not self.is_year_in_simulation(year):
+			raise SWInvalidYearException('Invalid year entered for CBAT')	
 
 		hour = self.convert_year_to_hour(year)
 		ages = self.get_ages_for_CBAT(year)
@@ -85,6 +87,9 @@ class SWHumanConcentrationReader(object):
 
 	# PRIVATE API
 	# Methods below should not be accessed outside of this class.
+
+	def is_year_in_simulation(self, year):
+		return year >= self.startyear and year <= self.endyear
 
 	def get_index_for_person_at_sampling(self, birth_year, sampling_year, concentration_profile):
 		age = sampling_year - birth_year
@@ -159,9 +164,6 @@ class SWHumanConcentrationReader(object):
 
 	def create_time_step_dict(self):
 		# dict structure: {hour : index of that hour}
-
-		ret_dict = {}
-
 		start_index = 0
 
 		for row in self.data:
@@ -171,12 +173,7 @@ class SWHumanConcentrationReader(object):
 
 		start_index += 1
 
-		for i in range(start_index, len(self.data), 1):
-			hour = int(self.data[i][0])
-			ret_dict.update({hour : i})
-
-		#print ret_dict
-		return ret_dict
+		return {int(self.data[i][0]) : i for i in range(start_index, len(self.data))}
 
 	def determine_timestep(self):
 		index = 0
