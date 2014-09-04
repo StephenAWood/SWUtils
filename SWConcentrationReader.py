@@ -153,12 +153,9 @@ class SWHumanConcentrationReader(object):
 	def create_column_dict(self):
 		#essentially a map that links the year a person was born in to the column they reside in within C.txt file.
 		ret_dict = {}
-		i = 0
 		years = range(self.startyear - self.age_at_model_start - s.HUMAN_MAX_AGE + s.DEFAULT_AGE_SPREAD, self.endyear, s.DEFAULT_AGE_SPREAD)
-		for year in years:
+		for i, year in enumerate(years):
 			column = s.NUMBER_OF_HUMANS - (i % s.NUMBER_OF_HUMANS)
-			#print 'year', year, 'is in column', column
-			i += 1
 			ret_dict.update({year : column})
 		return ret_dict
 
