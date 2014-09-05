@@ -81,7 +81,7 @@ class SWHumanConcentrationReader(object):
 
 		hour = self.convert_year_to_hour(year)
 		ages = self.get_ages_for_CBAT(year)
-		hour_index = self.time_step_dict[hour]
+		hour_index = self.time_step_dict[hour] - 1
 		row = self.data[hour_index]
 		CBAT_values = row[1:]
 		#sort
@@ -136,32 +136,21 @@ class SWHumanConcentrationReader(object):
 		return self.startyear > birth_year
 
 	def get_ages_for_CBAT(self, year):
-		ret_list = []
+		return [sampling_year - year for i in range(1, s.NUMBER_OF_HUMANS + 1) for year in self.column_dict if self.satisfy_cbat_condition(i, sampling_year, year)]
 
-		for i in range(0, s.NUMBER_OF_HUMANS):
-			age = year - (self.startyear - self.age_at_model_start - i * s.DEFAULT_AGE_SPREAD)
-			while age > s.HUMAN_MAX_AGE:
-				age -= s.HUMAN_MAX_AGE
-			ret_list.append(age)
-		return ret_list
+	def satisfy_cbat_condition(self, i, sampling_year, year):
+		return i == self.column_dict[year] and (sampling_year - year) <= s.HUMAN_MAX_AGE and (sampling_year - year) > 0
 
 	@staticmethod
 	def read_file(filename):
-		data = []
 		with open(filename, 'rU') as csvfile:
 			t = csv.reader(csvfile, delimiter = ',', quotechar= '"')
-			for row in t:
-				data.append(row)
-		return data
+			return [line for line in t]
 
 	def create_column_dict(self):
 		#essentially a map that links the year a person was born in to the column they reside in within C.txt file.
-		ret_dict = {}
 		years = range(self.startyear - self.age_at_model_start - s.HUMAN_MAX_AGE + s.DEFAULT_AGE_SPREAD, self.endyear, s.DEFAULT_AGE_SPREAD)
-		for i, year in enumerate(years):
-			column = s.NUMBER_OF_HUMANS - (i % s.NUMBER_OF_HUMANS)
-			ret_dict.update({year : column})
-		return ret_dict
+		return {year : s.NUMBER_OF_HUMANS - (i % s.NUMBER_OF_HUMANS) for i, year, in enumerate(years)}
 
 	def create_time_step_dict(self):
 		# dict structure: {hour : index of that hour}
@@ -169,13 +158,9 @@ class SWHumanConcentrationReader(object):
 		return {int(self.data[i][0]) : i for i in range(start_index, len(self.data))}
 
 	def determine_index_at_data_start(self):
-		start_index = 0
-		for row in self.data:
-			if row[0].upper() == self.TIME_STRING.upper():
-				start_index +=1
-				break
-			start_index += 1
-		return start_index # this is usually 8. (i.e. 9th row)
+		for i, row in enumerate(self.data):
+			if any(s.lower() == self.TIME_STRING.lower() for s in row):
+				return i + 1;
 
 	def determine_timestep(self):
 		i = self.determine_index_at_data_start()
