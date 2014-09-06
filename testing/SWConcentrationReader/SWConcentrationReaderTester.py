@@ -71,5 +71,6 @@ if main_test:
 		print 'Good! there were no errors with SWConcentrationReader detected!'
 
 if testing_features:
-	print seqn_21005.get_ages_for_CBAT(2004)
+	#print seqn_21005._SWHumanConcentrationReader__get_ages_for_CBAT(2004)
 	x = seqn_21005.extract_CBAT_for_year(2004)
+	print x
