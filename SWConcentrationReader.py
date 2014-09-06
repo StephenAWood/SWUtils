@@ -5,7 +5,6 @@ import csv
 from operator import itemgetter
 import SWSettings as s
 
-
 class SWHumanConcentrationReader(object):
 	"""docstring for ConcentrationReader 
 
@@ -16,7 +15,7 @@ class SWHumanConcentrationReader(object):
 	"""
 	ACCEPTED_FILENAMES = ['CMAN', 'CWOMAN', 'seqn']
 	INVALID_YEAR_ENTERED = 'Invalid year entered'
-	TIME_STRING = 'TIME'
+	TIME_STRING = 'time'
 
 	# PUBLIC API
 	# METHODS BELOW
@@ -77,13 +76,13 @@ class SWHumanConcentrationReader(object):
 
 	def extract_CBAT_for_year(self, year):
 		if not self.is_year_in_simulation(year):
-			raise SWInvalidYearException('Invalid year entered for CBAT')	
+			raise SWInvalidYearException('Invalid year entered for CBAT')
 
 		hour = self.convert_year_to_hour(year)
 		ages = self.get_ages_for_CBAT(year)
 		hour_index = self.time_step_dict[hour] - 1
-		row = self.data[hour_index]
-		CBAT_values = row[1:]
+		CBAT_values = self.data[hour_index][1:]
+		# CBAT_values = row[1:]
 		#sort
 		ages, CBAT_values = [list(x) for x in zip(*sorted(zip(ages, CBAT_values), key = itemgetter(0)))]
 
@@ -135,8 +134,11 @@ class SWHumanConcentrationReader(object):
 	def is_person_born_before_simulation_start(self, birth_year):
 		return self.startyear > birth_year
 
-	def get_ages_for_CBAT(self, year):
-		return [sampling_year - year for i in range(1, s.NUMBER_OF_HUMANS + 1) for year in self.column_dict if self.satisfy_cbat_condition(i, sampling_year, year)]
+	def get_ages_for_CBAT(self, sampling_year):
+		return [sampling_year - year for year in self.get_birth_years_at_year(sampling_year)]
+
+	def get_birth_years_at_year(self, sampling_year):
+		return [birth_year for i in range(1, s.NUMBER_OF_HUMANS + 1) for birth_year in self.column_dict if self.satisfy_cbat_condition(i, sampling_year, birth_year)]
 
 	def satisfy_cbat_condition(self, i, sampling_year, year):
 		return i == self.column_dict[year] and (sampling_year - year) <= s.HUMAN_MAX_AGE and (sampling_year - year) > 0
@@ -150,7 +152,7 @@ class SWHumanConcentrationReader(object):
 	def create_column_dict(self):
 		#essentially a map that links the year a person was born in to the column they reside in within C.txt file.
 		years = range(self.startyear - self.age_at_model_start - s.HUMAN_MAX_AGE + s.DEFAULT_AGE_SPREAD, self.endyear, s.DEFAULT_AGE_SPREAD)
-		return {year : s.NUMBER_OF_HUMANS - (i % s.NUMBER_OF_HUMANS) for i, year, in enumerate(years)}
+		return {year : s.NUMBER_OF_HUMANS - (i % s.NUMBER_OF_HUMANS) for i, year in enumerate(years)}
 
 	def create_time_step_dict(self):
 		# dict structure: {hour : index of that hour}

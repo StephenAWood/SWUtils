@@ -22,7 +22,7 @@ type_dict = {
 
 class SWNhanesReader(object):
 
-	READ_DIETARY_INFO = True # save a lot of time reading data if False
+	READ_DIETARY_INFO = False # save a lot of time reading data if False
 
 	"""docstring for NhanesReader
 

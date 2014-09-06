@@ -71,9 +71,5 @@ if main_test:
 		print 'Good! there were no errors with SWConcentrationReader detected!'
 
 if testing_features:
-	#print seqn_21005.column_dict
-	print seqn_21005.cbat_age_test(1995)
-
-
-
-
+	print seqn_21005.get_ages_for_CBAT(2004)
+	x = seqn_21005.extract_CBAT_for_year(2004)
