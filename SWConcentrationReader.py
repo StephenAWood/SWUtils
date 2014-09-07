@@ -5,7 +5,6 @@
 import csv
 from operator import itemgetter
 import SWSettings as s
-import os
 
 class SWHumanConcentrationReader(object):
 	"""docstring for ConcentrationReader 
@@ -165,9 +164,7 @@ class SWHumanConcentrationReader(object):
 		return int(self.data[i + 1][0]) - int(self.data[i][0])
 
 	def __check_year(self, year):
-		if year in self.column_dict:
-			return
-		else:
+		if not year in self.column_dict:
 			raise SWInvalidYearException(self.INVALID_YEAR_ENTERED)
 
 	def __convert_year_to_hour(self, year):
