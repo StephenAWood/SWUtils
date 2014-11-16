@@ -22,7 +22,7 @@ type_dict = {
 
 class SWNhanesReader(object):
 
-	READ_DIETARY_INFO = False # save a lot of time reading data if False
+	READ_DIETARY_INFO = True # save a lot of time reading data if False
 
 	"""docstring for NhanesReader
 
@@ -191,6 +191,8 @@ class SWNhanesReader(object):
 		if self.READ_DIETARY_INFO:
 			f = os.path.join(s.NHANES_DATA_PATH, self.folders_dict[self.nhanes_year], 'DR1IFF_C.csv')
 
+			#f = [os.path.join(s.NHANES_DATA_PATH, self.folders_dict[self.nhanes_year], fn) for fn in diet_filename_dict[self.nhanes_year]]
+
 			food_number_column = 2
 			raw = []
 
@@ -222,6 +224,10 @@ class SWNhanesReader(object):
 		'2001-2002' : ['DEMO_B.csv', 'L28POC_B.csv', 'BMX_B.csv'],
 		'1999-2000' : ['DEMO.csv', 'LAB28POC.csv', 'BMX.csv']
 	}
+
+	diet_filename_dict = {
+		'2003-2004' : ['DR1IFF_C.csv', 'DR2IFF_C.csv']
+ 	}
 
 	folders_dict = {
 		'2003-2004' : 'NHANES data 2003-2004',

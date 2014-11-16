@@ -81,15 +81,17 @@ class SWHumanConcentrationReader(object):
 		hour_index = self.time_step_dict[hour] - 1
 		CBAT_values = self.data[hour_index][1:]
 		ages, CBAT_values = [list(x) for x in zip(*sorted(zip(ages, CBAT_values), key = itemgetter(0)))]
-		return ages, CBAT_values
+		return (ages, CBAT_values)
 
 	# PRIVATE API
 	# Methods below should not be accessed outside of this class.
 
 	def __is_year_in_simulation(self, year):
+		"""determine if the year is in the simulation"""
 		return year >= self.startyear and year <= self.endyear
 
 	def __get_index_for_person_at_sampling(self, birth_year, sampling_year, concentration_profile):
+		"""get the index for the concentration profile depending on the age at sampling"""
 		age = sampling_year - birth_year
 
 		if age <= 0: raise SWInvalidYearException('Error, sampling year is before the person was born!')
@@ -104,16 +106,16 @@ class SWHumanConcentrationReader(object):
 			return (sampling_year - birth_year) * s.HOURS_IN_YEAR / self.timestep - 1
 
 	def __is_person_older_than_max_age(self, age):
+		"""determine if person is older than the max model supported age"""
 		return age > s.HUMAN_MAX_AGE
 
 	def __get_number_of_years_in_sim_for_person_born_in_year(self, birth_year):
-
+		"""determine how many years the person spends in the simulation"""
 		# need to check multiple conditions -
 		# 1) person who is born before the simulation starts
 		# 2) person whos max age(80) is not reached when the simulation ends
 		# 3) person who fulfills both 1 AND 2 - this case should be tested first
 		# last case is a person who lives the default 80 years in the simulation.
-
 		if self.__is_person_born_before_simulation_start(birth_year) and self.__is_person_alive_after_simulation_end(birth_year): # condition 3
 			return self.endyear - self.startyear
 		elif self.__is_person_alive_after_simulation_end(birth_year): # condition 2
@@ -124,22 +126,28 @@ class SWHumanConcentrationReader(object):
 			return s.HUMAN_MAX_AGE
 
 	def __is_person_alive_after_simulation_end(self, birth_year):
+		"""determine if person is still alive when the simulation ends"""
 		return (birth_year + s.HUMAN_MAX_AGE) > self.endyear
 
 	def __is_person_born_before_simulation_start(self, birth_year):
+		"""determine if person is born before the simulation start year"""
 		return self.startyear > birth_year
 
 	def __get_ages_for_CBAT(self, sampling_year):
+		"""get the ages for a cross-sectional body burden age trend at the specified sampling year"""
 		return [sampling_year - year for year in self.__get_birth_years_at_year(sampling_year)]
 
 	def __get_birth_years_at_year(self, sampling_year):
+		"""get the birth years for a cross-sectional body burden age trend at the specified sampling year"""
 		return [birth_year for i in range(1, s.NUMBER_OF_HUMANS + 1) for birth_year in self.column_dict if self.__satisfy_cbat_condition(i, sampling_year, birth_year)]
 
 	def __satisfy_cbat_condition(self, i, sampling_year, year):
+		"""see if the birth year is the closest to the sampling year"""
 		return i == self.column_dict[year] and (sampling_year - year) <= s.HUMAN_MAX_AGE and (sampling_year - year) > 0
 
 	@staticmethod
 	def __read_file(filename):
+		"""read the file and return it as a list"""
 		with open(filename, 'rU') as csvfile:
 			t = csv.reader(csvfile, delimiter = ',', quotechar= '"')
 			return [line for line in t]
