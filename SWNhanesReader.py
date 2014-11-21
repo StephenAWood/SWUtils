@@ -189,7 +189,7 @@ class SWNhanesReader(object):
 
 		# special read in for diet info
 		if self.READ_DIETARY_INFO:
-			f = os.path.join(s.NHANES_DATA_PATH, self.folders_dict[self.nhanes_year], diet_filename_dict[self.nhanes_year])
+			f = os.path.join(s.NHANES_DATA_PATH, self.folders_dict[self.nhanes_year], self.diet_filename_dict[self.nhanes_year])
 
 			# f = [os.path.join(s.NHANES_DATA_PATH, self.folders_dict[self.nhanes_year], fn) for fn in diet_filename_dict[self.nhanes_year]]
 
@@ -226,8 +226,8 @@ class SWNhanesReader(object):
 	}
 
 	diet_filename_dict = {
-		'2003-2004' : 'DR1IFF_C.csv'
-		'2001-2002' : ''
+		'2003-2004' : 'DR1IFF_C.csv',
+		'2001-2002' : '',
 		'1999-2000' : ''
  	}
 
