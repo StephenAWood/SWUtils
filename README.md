@@ -1,6 +1,6 @@
 # SWUtils
 
-These are various utilities I have created to help me analyze output data from ACC-HUMAN.
+These are various utilities I have created to help me analyze output data from the fugacity-based mechanistic bioaccumulation model ACC-HUMAN.
 
 By Stephen Wood. See the license file for details.
 
