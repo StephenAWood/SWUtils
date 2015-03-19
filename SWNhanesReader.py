@@ -22,7 +22,7 @@ type_dict = {
 
 class SWNhanesReader(object):
 
-	READ_DIETARY_INFO = True # save a lot of time reading data if False
+	
 
 	"""docstring for NhanesReader
 
@@ -34,8 +34,9 @@ class SWNhanesReader(object):
 	"""
 
 	# Public API.
-	def __init__(self, nhanes_year='2003-2004'):
+	def __init__(self, nhanes_year='2003-2004', diet = False):
 		super(SWNhanesReader, self).__init__()
+		self.READ_DIETARY_INFO = diet # save a lot of time reading data if False
 		self.nhanes_year = nhanes_year
 		self.data = self.obtain_data()
 
@@ -49,6 +50,11 @@ class SWNhanesReader(object):
 
 	def get_list_of_seqn(self):
 		return self.data.keys()
+
+	def get_concentration_list_for_pcb(self, pcb):
+		seqn_list = self.get_list_of_seqn_for_pcb(pcb)
+		nhanes_code = self.get_nhanes_code_for_pcb(pcb)
+		return [self.data.get(x).get(nhanes_code) for x in seqn_list]
 
 	def get_median_concentration_for_pcb_for_gender(self, pcb, female):
 		# get all median concentrations for a particular PCB
@@ -208,7 +214,7 @@ class SWNhanesReader(object):
 				food_index = int(row[food_number_column])
 				ret_dict[seqn]['food_index'].update({food_index : {}})
 				for i, header in enumerate(raw[header_row][3:]):
-					header = header.upper()
+					header = header.upper().replace('DRX', 'DR1')
 					column = i + 3
 					#print 'brool'
 					try: val = self.cast(header)(row[column])
@@ -221,14 +227,14 @@ class SWNhanesReader(object):
 	# Dictionaries containing the appropriate file names.
 	filenames_dict = {
 		'2003-2004' : ['DEMO_C.csv', 'RHQ_C.csv', 'L28NPB_C.csv', 'BMX_C.csv', 'L28DFP_C.csv', 'DR1TOT_C.csv'],
-		'2001-2002' : ['DEMO_B.csv', 'L28POC_B.csv', 'BMX_B.csv'],
-		'1999-2000' : ['DEMO.csv', 'LAB28POC.csv', 'BMX.csv']
+		'2001-2002' : ['DEMO_B.csv', 'L28POC_B.csv', 'BMX_B.csv', 'DRXTOT_B.csv', 'RHQ_B.csv'],
+		'1999-2000' : ['DEMO.csv', 'LAB28POC.csv', 'BMX.csv', 'DRXTOT.csv', 'RHQ.csv']
 	}
 
 	diet_filename_dict = {
 		'2003-2004' : 'DR1IFF_C.csv',
-		'2001-2002' : '',
-		'1999-2000' : ''
+		'2001-2002' : 'DRXIFF_B.csv',
+		'1999-2000' : 'DRXIFF.csv'
  	}
 
 	folders_dict = {
