@@ -94,7 +94,7 @@ class SWHumanConcentrationReader(object):
 		"""get the index for the concentration profile depending on the age at sampling"""
 		age = sampling_year - birth_year
 
-		if age <= 0: raise SWInvalidYearException('Error, sampling year is before the person was born!')
+		if age <= 0: raise SWInvalidYearException('Error, sampling year %d is before the person was born (%d)!' %(sampling_year, birth_year))
 
 		if self.__is_person_older_than_max_age(age) and self.__is_person_born_before_simulation_start(birth_year):
 			return len(concentration_profile) - 1

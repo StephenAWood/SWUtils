@@ -2,7 +2,7 @@
 # A file to hold all of my constants.
 
 #Files and directories
-NHANES_DATA_PATH = '/Users/stephenwood/Dropbox/School/BETR Global/nhanes_data'
+NHANES_DATA_PATH = '/Users/stephenwood/Dropbox/School/Current Projects/BETR Global/nhanes_data'
 
 # Time params.
 HOURS_IN_YEAR = 8760
